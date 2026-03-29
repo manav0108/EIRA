@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2, GraduationCap, Users, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useAuth } from "@/contexts/auth-context"
@@ -12,12 +12,46 @@ interface AuthFormProps {
   mode: "login" | "signup"
 }
 
+const demoAccounts = [
+  {
+    role: "Student",
+    email: "student@eira.app",
+    description: "Personal wellness dashboard",
+    icon: GraduationCap,
+    color: "teal",
+    bgClass: "bg-teal-500/10 hover:bg-teal-500/20 border-teal-500/30",
+    iconClass: "text-teal-400",
+    buttonClass: "bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border-teal-500/40",
+  },
+  {
+    role: "Counsellor",
+    email: "counselor@eira.app",
+    description: "Manage sessions & students",
+    icon: Users,
+    color: "blue",
+    bgClass: "bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30",
+    iconClass: "text-blue-400",
+    buttonClass: "bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border-blue-500/40",
+  },
+  {
+    role: "Admin",
+    email: "admin@eira.app",
+    description: "Platform analytics & control",
+    icon: Shield,
+    color: "purple",
+    bgClass: "bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30",
+    iconClass: "text-purple-400",
+    buttonClass: "bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border-purple-500/40",
+  },
+]
+
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter()
   const { login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [loadingRole, setLoadingRole] = useState<string | null>(null)
   const [error, setError] = useState("")
   const [formData, setFormData] = useState({
     email: "",
@@ -39,7 +73,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         if (success) {
           router.push("/")
         } else {
-          setError("Invalid demo credentials. Please use the demo accounts below.")
+          setError("Please use one of the demo accounts below")
         }
       } else {
         // Signup - validate and then login
@@ -67,17 +101,20 @@ export function AuthForm({ mode }: AuthFormProps) {
     }
   }
 
-  const handleDemoLogin = async (email: string) => {
+  const handleDemoLogin = async (email: string, role: string) => {
     setFormData({ ...formData, email, password: "12345678" })
     setError("")
-    setIsSubmitting(true)
+    setLoadingRole(role)
+    
+    // Small delay to show the auto-fill effect
+    await new Promise(resolve => setTimeout(resolve, 300))
     
     const success = await login(email, "12345678")
     if (success) {
       router.push("/")
     } else {
       setError("Demo login failed")
-      setIsSubmitting(false)
+      setLoadingRole(null)
     }
   }
 
@@ -102,9 +139,70 @@ export function AuthForm({ mode }: AuthFormProps) {
         </p>
       </div>
 
+      {/* Demo Login Section - Moved to top for better visibility */}
+      {isLogin && (
+        <div className="mb-8">
+          <div className="text-center mb-4">
+            <p className="text-sm text-muted-foreground">
+              Try EIRA instantly with demo accounts
+            </p>
+          </div>
+          
+          <div className="grid gap-3">
+            {demoAccounts.map((account) => {
+              const Icon = account.icon
+              const isLoading = loadingRole === account.role
+              
+              return (
+                <div
+                  key={account.role}
+                  className={`relative p-4 rounded-xl border transition-all duration-300 ${account.bgClass} ${
+                    isLoading ? "ring-2 ring-primary/50" : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`p-2.5 rounded-lg bg-background/50 ${account.iconClass}`}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-foreground text-sm">{account.role}</h3>
+                      <p className="text-xs text-muted-foreground truncate">{account.description}</p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className={`shrink-0 border transition-all duration-200 ${account.buttonClass}`}
+                      onClick={() => handleDemoLogin(account.email, account.role)}
+                      disabled={loadingRole !== null}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        `Login as ${account.role}`
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-border"></div>
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">
+            {isLogin ? "Or sign in with email" : "Or continue with email"}
+          </span>
+        </div>
+      </div>
+
       {/* Social Buttons */}
       <div className="flex gap-3 mb-6">
-        <Button variant="outline" className="flex-1 border-border hover:bg-secondary gap-2">
+        <Button variant="outline" className="flex-1 border-border hover:bg-secondary gap-2 transition-all duration-200 hover:scale-[1.02]">
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path
               fill="currentColor"
@@ -125,7 +223,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           </svg>
           Google
         </Button>
-        <Button variant="outline" className="flex-1 border-border hover:bg-secondary gap-2">
+        <Button variant="outline" className="flex-1 border-border hover:bg-secondary gap-2 transition-all duration-200 hover:scale-[1.02]">
           <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
           </svg>
@@ -133,19 +231,11 @@ export function AuthForm({ mode }: AuthFormProps) {
         </Button>
       </div>
 
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border"></div>
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
-        </div>
-      </div>
-
-      {/* Error Message */}
+      {/* Error Message - Softer styling */}
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-          {error}
+        <div className="mb-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-sm flex items-center gap-3">
+          <div className="shrink-0 w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+          <span>{error}</span>
         </div>
       )}
 
@@ -158,9 +248,9 @@ export function AuthForm({ mode }: AuthFormProps) {
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             placeholder="you@example.com"
-            className="w-full px-4 py-3 rounded-xl bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full px-4 py-3 rounded-xl bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200"
             required
-            disabled={isSubmitting}
+            disabled={isSubmitting || loadingRole !== null}
           />
         </div>
 
@@ -172,14 +262,14 @@ export function AuthForm({ mode }: AuthFormProps) {
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               placeholder="Enter your password"
-              className="w-full px-4 py-3 rounded-xl bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 pr-12"
+              className="w-full px-4 py-3 rounded-xl bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 pr-12 transition-all duration-200"
               required
-              disabled={isSubmitting}
+              disabled={isSubmitting || loadingRole !== null}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             >
               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
@@ -196,14 +286,14 @@ export function AuthForm({ mode }: AuthFormProps) {
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   placeholder="Confirm your password"
-                  className="w-full px-4 py-3 rounded-xl bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 pr-12"
+                  className="w-full px-4 py-3 rounded-xl bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 pr-12 transition-all duration-200"
                   required
                   disabled={isSubmitting}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -217,7 +307,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="+1 (555) 000-0000"
-                className="w-full px-4 py-3 rounded-xl bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-4 py-3 rounded-xl bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200"
                 disabled={isSubmitting}
               />
             </div>
@@ -228,27 +318,27 @@ export function AuthForm({ mode }: AuthFormProps) {
         <div className="flex items-center justify-between">
           {isLogin ? (
             <>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer group">
                 <Checkbox
                   checked={formData.rememberMe}
                   onCheckedChange={(checked) => setFormData({ ...formData, rememberMe: checked as boolean })}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || loadingRole !== null}
                 />
-                <span className="text-sm text-muted-foreground">Remember me</span>
+                <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Remember me</span>
               </label>
-              <Link href="#" className="text-sm text-primary hover:underline">
+              <Link href="#" className="text-sm text-primary hover:underline hover:text-primary/80 transition-colors">
                 Forgot password?
               </Link>
             </>
           ) : (
-            <label className="flex items-start gap-2 cursor-pointer">
+            <label className="flex items-start gap-2 cursor-pointer group">
               <Checkbox
                 checked={formData.agreeTerms}
                 onCheckedChange={(checked) => setFormData({ ...formData, agreeTerms: checked as boolean })}
                 className="mt-0.5"
                 disabled={isSubmitting}
               />
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
                 I agree to the{" "}
                 <Link href="#" className="text-primary hover:underline">Terms of Service</Link>
                 {" "}and{" "}
@@ -260,8 +350,8 @@ export function AuthForm({ mode }: AuthFormProps) {
 
         <Button 
           type="submit" 
-          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 glow-cyan py-6"
-          disabled={isSubmitting}
+          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 glow-cyan py-6 transition-all duration-200 hover:scale-[1.02]"
+          disabled={isSubmitting || loadingRole !== null}
         >
           {isSubmitting ? (
             <>
@@ -279,51 +369,19 @@ export function AuthForm({ mode }: AuthFormProps) {
         {isLogin ? (
           <>
             {`Don't have an account? `}
-            <Link href="/signup" className="text-primary hover:underline font-medium">
+            <Link href="/signup" className="text-primary hover:underline font-medium transition-colors hover:text-primary/80">
               Sign up
             </Link>
           </>
         ) : (
           <>
             Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline font-medium">
+            <Link href="/login" className="text-primary hover:underline font-medium transition-colors hover:text-primary/80">
               Login
             </Link>
           </>
         )}
       </p>
-
-      {/* Demo Credentials */}
-      {isLogin && (
-        <div className="mt-8 p-4 rounded-xl border border-primary/30 bg-primary/5">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Demo Credentials</h3>
-          <div className="space-y-1 text-xs text-muted-foreground mb-4">
-            <p><span className="text-foreground">Student:</span> student@eira.app / 12345678</p>
-            <p><span className="text-foreground">Counselor:</span> counselor@eira.app / 12345678</p>
-            <p><span className="text-foreground">Admin:</span> admin@eira.app / 12345678</p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 border-primary/50 text-primary hover:bg-primary/10"
-              onClick={() => handleDemoLogin("student@eira.app")}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Login as Student"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 border-primary/50 text-primary hover:bg-primary/10"
-              onClick={() => handleDemoLogin("counselor@eira.app")}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Login as Counselor"}
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
