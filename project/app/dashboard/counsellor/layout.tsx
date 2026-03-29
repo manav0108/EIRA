@@ -5,14 +5,6 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { CounsellorHero } from "@/components/counsellor/counsellor-hero"
-import { StatCards } from "@/components/counsellor/stat-cards"
-import { TodaysSessions } from "@/components/counsellor/todays-sessions"
-import { PriorityAlerts } from "@/components/counsellor/priority-alerts"
-import { QuickActions } from "@/components/counsellor/quick-actions"
-import { AssignedStudents } from "@/components/counsellor/assigned-students"
-import { RecentNotes } from "@/components/counsellor/recent-notes"
-import { StudentProfile } from "@/components/counsellor/student-profile"
 import { Button } from "@/components/ui/button"
 import {
   LayoutDashboard,
@@ -28,7 +20,7 @@ import {
 } from "lucide-react"
 
 const sidebarItems = [
-  { href: "/counsellor/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/counsellor", label: "Dashboard", icon: LayoutDashboard },
   { href: "/counsellor/students", label: "Students", icon: Users },
   { href: "/counsellor/sessions", label: "Sessions", icon: Calendar },
   { href: "/counsellor/notes", label: "Notes", icon: FileText },
@@ -36,10 +28,13 @@ const sidebarItems = [
   { href: "/counsellor/reports", label: "Reports", icon: BarChart3 },
 ]
 
-export default function CounsellorDashboard() {
+export default function CounsellorDashboardLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const { user, isLoading, logout } = useAuth()
   const router = useRouter()
-  const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   useEffect(() => {
@@ -82,7 +77,7 @@ export default function CounsellorDashboard() {
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {sidebarItems.map((item) => {
-            const isActive = item.href === "/counsellor/dashboard"
+            const isActive = item.href === "/dashboard/counsellor"
             return (
               <Link key={item.href} href={item.href}>
                 <Button
@@ -103,7 +98,7 @@ export default function CounsellorDashboard() {
 
         {/* Settings & Logout */}
         <div className="p-4 border-t border-sidebar-border space-y-1">
-          <Link href="/counsellor/settings">
+          <Link href="/profile">
             <Button
               variant="ghost"
               className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -135,41 +130,7 @@ export default function CounsellorDashboard() {
 
       {/* Main Content */}
       <div className={`transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-0"}`}>
-        {/* Hero Section - EIRA branded */}
-        <CounsellorHero counsellorName={user.name} />
-
-        {/* Dashboard Content */}
-        <div className="px-4 sm:px-6 lg:px-8 pb-12 max-w-7xl mx-auto">
-          {/* Stat Cards */}
-          <StatCards />
-
-          {/* Main Grid: Sessions + Priority Alerts */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-            <div className="lg:col-span-2">
-              <TodaysSessions onSelectStudent={setSelectedStudent} />
-            </div>
-            <div className="lg:col-span-1">
-              <PriorityAlerts onSelectStudent={setSelectedStudent} />
-            </div>
-          </div>
-
-          {/* Second Row: Assigned Students + Recent Notes */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-            <AssignedStudents onSelectStudent={setSelectedStudent} />
-            <RecentNotes />
-          </div>
-
-          {/* Quick Actions */}
-          <QuickActions />
-        </div>
-
-        {/* Student Profile Modal */}
-        {selectedStudent && (
-          <StudentProfile
-            studentId={selectedStudent}
-            onClose={() => setSelectedStudent(null)}
-          />
-        )}
+        {children}
       </div>
     </div>
   )
