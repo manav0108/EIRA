@@ -3,18 +3,44 @@
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { CounsellorSidebar } from "@/components/counsellor/counsellor-sidebar"
-import { DashboardHeader } from "@/components/counsellor/dashboard-header"
+import Image from "next/image"
+import Link from "next/link"
+import { CounsellorHero } from "@/components/counsellor/counsellor-hero"
 import { StatCards } from "@/components/counsellor/stat-cards"
 import { TodaysSessions } from "@/components/counsellor/todays-sessions"
 import { PriorityAlerts } from "@/components/counsellor/priority-alerts"
 import { QuickActions } from "@/components/counsellor/quick-actions"
+import { AssignedStudents } from "@/components/counsellor/assigned-students"
+import { RecentNotes } from "@/components/counsellor/recent-notes"
 import { StudentProfile } from "@/components/counsellor/student-profile"
+import { Button } from "@/components/ui/button"
+import {
+  LayoutDashboard,
+  Users,
+  Calendar,
+  FileText,
+  Bell,
+  BarChart3,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+} from "lucide-react"
+
+const sidebarItems = [
+  { href: "/counsellor/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/counsellor/students", label: "Students", icon: Users },
+  { href: "/counsellor/sessions", label: "Sessions", icon: Calendar },
+  { href: "/counsellor/notes", label: "Notes", icon: FileText },
+  { href: "/counsellor/requests", label: "Requests", icon: Bell },
+  { href: "/counsellor/reports", label: "Reports", icon: BarChart3 },
+]
 
 export default function CounsellorDashboard() {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, logout } = useAuth()
   const router = useRouter()
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   useEffect(() => {
     if (!isLoading && (!user || user.role !== "counselor")) {
@@ -35,39 +61,113 @@ export default function CounsellorDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Left Sidebar */}
-      <CounsellorSidebar />
-
-      {/* Main Content */}
-      <div className="flex-1 ml-64 p-8">
-        {/* Header */}
-        <DashboardHeader counsellorName={user.name} />
-
-        {/* Stat Cards */}
-        <StatCards />
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-          {/* Today's Sessions - Takes 2 columns */}
-          <div className="lg:col-span-2">
-            <TodaysSessions onSelectStudent={setSelectedStudent} />
-          </div>
-
-          {/* Priority Alerts */}
-          <div className="lg:col-span-1">
-            <PriorityAlerts onSelectStudent={setSelectedStudent} />
-          </div>
+    <div className="min-h-screen bg-background">
+      {/* Sidebar */}
+      <aside
+        className={`fixed left-0 top-0 bottom-0 z-40 w-64 bg-sidebar border-r border-sidebar-border flex flex-col transition-transform duration-300 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Logo */}
+        <div className="p-6 border-b border-sidebar-border">
+          <Link href="/" className="flex items-center gap-3">
+            <Image src="/logo.png" alt="EIRA" width={40} height={40} />
+            <div>
+              <span className="text-xl font-bold text-primary">EIRA</span>
+              <span className="block text-xs text-muted-foreground">Counsellor Portal</span>
+            </div>
+          </Link>
         </div>
 
-        {/* Quick Actions */}
-        <QuickActions />
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {sidebarItems.map((item) => {
+            const isActive = item.href === "/counsellor/dashboard"
+            return (
+              <Link key={item.href} href={item.href}>
+                <Button
+                  variant={isActive ? "secondary" : "ghost"}
+                  className={`w-full justify-start gap-3 ${
+                    isActive
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  }`}
+                >
+                  <item.icon className="h-5 w-5" />
+                  {item.label}
+                </Button>
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* Settings & Logout */}
+        <div className="p-4 border-t border-sidebar-border space-y-1">
+          <Link href="/counsellor/settings">
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent/50"
+            >
+              <Settings className="h-5 w-5" />
+              Settings
+            </Button>
+          </Link>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive"
+            onClick={logout}
+          >
+            <LogOut className="h-5 w-5" />
+            Logout
+          </Button>
+        </div>
+      </aside>
+
+      {/* Mobile sidebar toggle */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-4 left-4 z-50 lg:hidden"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+      >
+        {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </Button>
+
+      {/* Main Content */}
+      <div className={`transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-0"}`}>
+        {/* Hero Section - EIRA branded */}
+        <CounsellorHero counsellorName={user.name} />
+
+        {/* Dashboard Content */}
+        <div className="px-4 sm:px-6 lg:px-8 pb-12 max-w-7xl mx-auto">
+          {/* Stat Cards */}
+          <StatCards />
+
+          {/* Main Grid: Sessions + Priority Alerts */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+            <div className="lg:col-span-2">
+              <TodaysSessions onSelectStudent={setSelectedStudent} />
+            </div>
+            <div className="lg:col-span-1">
+              <PriorityAlerts onSelectStudent={setSelectedStudent} />
+            </div>
+          </div>
+
+          {/* Second Row: Assigned Students + Recent Notes */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+            <AssignedStudents onSelectStudent={setSelectedStudent} />
+            <RecentNotes />
+          </div>
+
+          {/* Quick Actions */}
+          <QuickActions />
+        </div>
 
         {/* Student Profile Modal */}
         {selectedStudent && (
-          <StudentProfile 
-            studentId={selectedStudent} 
-            onClose={() => setSelectedStudent(null)} 
+          <StudentProfile
+            studentId={selectedStudent}
+            onClose={() => setSelectedStudent(null)}
           />
         )}
       </div>
