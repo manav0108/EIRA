@@ -62,6 +62,18 @@ export function AuthForm({ mode }: AuthFormProps) {
     agreeTerms: false,
   })
 
+  const getRedirectPath = (email: string): string => {
+    // Determine redirect based on email/role
+    if (email.toLowerCase() === "student@eira.app") {
+      return "/dashboard/student"
+    } else if (email.toLowerCase() === "counselor@eira.app") {
+      return "/dashboard/counsellor"
+    } else if (email.toLowerCase() === "admin@eira.app") {
+      return "/dashboard/admin"
+    }
+    return "/dashboard/student" // Default
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
@@ -71,7 +83,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       if (mode === "login") {
         const success = await login(formData.email, formData.password)
         if (success) {
-          router.push("/")
+          router.push(getRedirectPath(formData.email))
         } else {
           setError("Please use one of the demo accounts below")
         }
@@ -89,7 +101,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         }
         const success = await login(formData.email, formData.password)
         if (success) {
-          router.push("/")
+          router.push(getRedirectPath(formData.email))
         } else {
           setError("Failed to create account")
         }
@@ -111,7 +123,7 @@ export function AuthForm({ mode }: AuthFormProps) {
     
     const success = await login(email, "12345678")
     if (success) {
-      router.push("/")
+      router.push(getRedirectPath(email))
     } else {
       setError("Demo login failed")
       setLoadingRole(null)
