@@ -108,6 +108,7 @@ MIT License
 👨‍💻 Team
 
 Manav Antil 
+
 Rashi Sharma
 
 ⭐ Support
