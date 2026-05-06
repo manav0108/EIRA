@@ -1,6 +1,5 @@
 🧠 EIRA 2.0
 Empathetic Intelligent Response Assistant
-
 🚀 A next-gen AI-powered mental wellness platform combining human support + intelligent systems to create a safe, private, and effective emotional support ecosystem.
 
 🌍 Live Vision
