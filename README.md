@@ -97,9 +97,6 @@ Improve mental health step-by-step
 Contributions are welcome!
 Fork the repo and submit a PR 🚀
 
-📄 License
-
-MIT License
 
 ❤️ Built With Purpose
 
